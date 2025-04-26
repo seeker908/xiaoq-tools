@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=File Cleaner
+Name[zh_CN]=强制删除文件或文件夹
+Comment=Clean files and directories
+Exec=/opt/apps/xiaoq_tools/file-cleaner %F
+Icon=/usr/share/icons/file-cleaner.png
+Terminal=true
+Type=Application
+Categories=Utility;System;
+Keywords=clean;delete;remove;
+MimeType=inode/directory;inode/file;text/plain;text/html;text/x-php;text/x-c;text/x-shellscript;application/wps-office.wps;application/wps-office.wpt;application/wps-office.wpso;application/wps-office.wpss;application/wps-office.doc;application/wps-office.dot;application/vnd.ms-word;application/x-msword;application/msword-template;application/wps-office.docx;application/wps-office.dotx;application/rtf;application/vnd.ms-word.document.macroEnabled.12;application/vnd.openxmlformats-officedocument.wordprocessingml.document;x-scheme-handler/ksoqing;x-scheme-handler/ksowps;x-scheme-handler/ksowpp;x-scheme-handler/ksoet;x-scheme-handler/ksowpscloudsvr;x-scheme-handler/ksowebstartupwps;x-scheme-handler/ksowebstartupet;x-scheme-handler/ksowebstartupwpp;application/wps-office.uot;application/wps-office.uot3;application/wps-office.uott3;x-scheme-handler/ksodoccenter;application/x-7z-compressed;application/x-7z-compressed-tar;application/x-ace;application/x-alz;application/x-arj;application/x-brotli;application/x-brotli-compressed-tar;application/x-bzip;application/x-bzip-compressed-tar;application/x-bzip1;application/x-bzip1-compressed-tar;application/x-cabinet;application/x-cbr;application/x-cbz;application/x-cd-image;application/x-compress;application/x-compressed-tar;application/x-cpio;application/vnd.debian.binary-package;application/x-ear;application/x-ms-dos-executable;application/x-gtar;application/x-gzip;application/x-gzpostscript;application/x-java-archive;application/x-lha;application/x-lzh-compressed;application/x-lrzip;application/x-lrzip-compressed-tar;application/x-lzip;application/x-lzip-compressed-tar;application/x-lzma;application/x-lzma-compressed-tar;application/x-lzop;application/x-lzop-compressed-tar;application/x-ms-wim;application/x-rar-compressed;application/x-rpm;application/x-source-rpm;application/x-rzip;application/x-tar;application/x-tarz;application/x-stuffit;application/x-war;application/x-xz;application/x-xz-compressed-tar;application/zip;application/x-archive;application/vnd.ms-cab-compressed;application/x-xz-compressed;image/png;image/jpeg;image/gif;image/svg+xml;application/json;audio/mpeg;audio/wav;audio/ogg;video/mp4;video/webm;video/ogg;application/octet-stream;application/wps-office.ppt;application/wps-office.pptx;application/wps-office.xlsx;application/wps-office.xls;
+Actions=ContextMenu;
+[Desktop Action ContextMenu]
+Name=右键菜单支持

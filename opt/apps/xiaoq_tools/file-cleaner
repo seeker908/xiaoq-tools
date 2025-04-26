@@ -1,0 +1,280 @@
+#!/bin/bash 
+
+# 颜色定义 
+RED='\033[0;31m' 
+GREEN='\033[0;32m' 
+BLUE='\033[0;34m' 
+NC='\033[0m' # No Color 
+ 
+# 桌面通知函数 
+notify() { 
+    local title="$1" 
+    local message="$2" 
+    local level="$3" 
+ 
+    case "$level" in 
+        "success") 
+            color="$GREEN" 
+            urgency="normal" 
+            ;; 
+        "warning") 
+            color="$BLUE" 
+            urgency="normal" 
+            ;; 
+        "error") 
+            color="$RED" 
+            urgency="critical" 
+            ;; 
+        *) 
+            color="$NC" 
+            urgency="normal" 
+            ;; 
+    esac 
+ 
+    echo -e "${color}${message}${NC}" 
+    notify-send -u "$urgency" "$title" "$message"  2>/dev/null || true
+} 
+
+# 免责申明
+notify "软件使用免责申明" "免责申明:本软件具备【强制删除】文件及文件夹功能，可能造成不可逆数据损失。请在使用前仔细阅读以下条款，确认理解所有操作风险后方可继续使用。您的使用行为将视为对本协议全部条款的认可与接受。\n1.1 、使用本软件前，用户应自行对重要文件进行备份;\n1.2、本软件为免费开源程序，不提供任何形式的技术支持;\n1.3、因用户操作失误、未阅读提示、擅自修改程序等行为导致的数据损失，开发者不承担任何法律责任;\n1.4、使用本软件进行非法操作产生的后果由用户自行承担" "error"
+
+# 检查是否是系统关键文件 
+is_critical_file() { 
+    local filepath=$1 
+    # 定义系统关键目录和文件列表 
+    local critical_paths=( 
+        "/bin" "/sbin" "/usr/bin" "/usr/sbin" "/lib" "/usr/lib" "/lib64" "/usr/lib64" 
+        "/etc" "/var" "/boot" "/root" "/dev" "/proc" "/sys" "/run" 
+        "/usr/local/bin" "/usr/local/sbin"  "/home"   "/proc"   "/srv"
+    ) 
+
+    # 检查是否是系统关键文件 
+    for path in "${critical_paths[@]}"; do 
+        if [[ "$filepath" == "$path"* ]]; then 
+            return 0 # 是系统关键文件 
+        fi 
+    done 
+    return 1 # 不是系统关键文件 
+} 
+
+# 解除防止编辑权限（递归处理目录及其下所有文件） 
+remove_immutable_flags() { 
+    local target=$1 
+
+    # 检查文件/目录是否存在 
+    if [ ! -e "$target" ]; then 
+        notify "路径错误" "目标不存在: $target" "error"
+        return 1 
+    fi 
+
+    # 处理单个文件 
+    if [ -f "$target" ] || [ -L "$target" ]; then 
+        if lsattr "$target" 2>/dev/null | grep -q "i"; then 
+            if ! sudo chattr -i "$target"; then 
+                notify "权限错误" "无法移除文件的不可变标志"  "error"
+                return 1 
+            fi 
+            notify "权限更新" "已移除不可变标志: $target"  "success"
+        fi 
+        return 0 
+    fi 
+
+    # 处理目录（递归） 
+    if [ -d "$target" ]; then 
+        # 处理目录本身 
+        if lsattr -d "$target" 2>/dev/null | grep -q "i"; then 
+            if ! sudo chattr -i "$target"; then 
+                notify  "权限错误" "无法移除目录的不可变标志"   "error"
+                return 1 
+            fi 
+            notify "权限更新" "已移除目录不可变标志: $target"  "success"
+        fi 
+
+        # 递归处理目录内容 
+        local success=true 
+        while IFS= read -r -d $'\0' item; do 
+            if lsattr "$item" 2>/dev/null | grep -q "i"; then 
+                if ! sudo chattr -i -R "$item"; then 
+                    notify "权限错误" "无法移除项目的不可变标志: $item"    "error"
+                    success=false 
+                else 
+                    notify "权限更新" "已移除不可变标志: $item"  "success"
+                fi 
+            fi 
+        done < <(sudo find "$target" -exec printf '%s\0' {} + 2>/dev/null) 
+
+        $success && return 0 || return 1 
+    fi 
+
+    return 0 
+} 
+
+# 主函数 
+main() { 
+ # 保存原始参数 
+ORIGINAL_ARGS=("$@") 
+
+# 提前获取sudo权限 
+if [ $(id -u) -ne 0 ]; then 
+    sudo -v || { notify "错误" "需要sudo权限" "error"; exit 1; } 
+    # 重新设置参数，因为sudo可能会重置它们 
+    set -- "${ORIGINAL_ARGS[@]}" 
+fi 
+
+# 检查是否提供了路径参数 
+if [ $# -eq 0 ]; then 
+     notify  "提示" "提示:请拖放文件/文件夹到终端或直接输入路径" "warning"
+     read -p ": " target_path 
+else 
+    # 处理可能包含引号的路径 
+    target_path=$(printf "%s" "$*" | sed "s/'//g" | sed 's/"//g') 
+fi 
+
+# 移除路径中的单引号（拖放操作可能会添加） 
+target_path=$(echo "$target_path" | sed "s/'//g" | sed 's/"//g') 
+
+# 处理路径格式（兼容统信UOS和麒麟系统） 
+process_path() { 
+    local target_path="$1" 
+    # 处理file://协议路径 
+    if [[ "$target_path" == file://* ]]; then 
+        target_path="${target_path#file://}" 
+        target_path=$(echo "$target_path" | sed 's/%20/ /g') # 解码URL编码 
+    fi 
+    # 处理麒麟系统可能的多重引号问题 
+    target_path=$(echo "$target_path" | sed "s/^'\+//;s/'\+$//;s/^\"\+//;s/\"\+$//") 
+    echo "$target_path" 
+} 
+
+target_path=$(process_path "$target_path") 
+
+# 验证路径是否存在 
+if [ ! -e "$target_path" ]; then 
+    notify "错误" "路径无效: $target_path" "error" 
+    exit 1 
+fi 
+
+    # 检查是否是系统关键文件 
+    if is_critical_file "$target_path"; then 
+        echo -e "\033[33m警告：您正在尝试删除系统关键文件或目录！\033[0m" 
+        read -p "这可能导致系统不稳定或无法启动！确定要继续吗？(y/n): " confirm 
+        confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')  # 转换为小写 
+        if [ "$confirm" != "y" ]; then 
+            notify  "操作取消" "用户取消删除系统关键文件" "error"
+            exit 1 
+        fi 
+    fi 
+
+    # 二次确认 
+    echo "您输入的路径是: $target_path" 
+    read -p "请再次确认路径是否正确 (y/n): " confirm 
+    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')  # 转换为小写 
+    if [ "$confirm" != "y" ]; then 
+        notify "操作取消" "用户取消删除操作" "error"
+        exit 1 
+    fi 
+
+    # 询问是否解除防止编辑权限 
+    echo -e "\033[34m注意：解除防止编辑权限可能会改变系统的安全设置，请谨慎操作。\033[0m" 
+    read -p "是否要解除目录及子目录下所有文件的防止编辑权限？(y/n): " remove_immutable 
+    remove_immutable=$(echo "$remove_immutable" | tr '[:upper:]' '[:lower:]')  # 转换为小写 
+    if [ "$remove_immutable" = "y" ]; then 
+        if ! remove_immutable_flags "$target_path"; then 
+            notify "操作失败" "解除防止编辑权限时出错"  "error"
+            exit 1 
+        fi 
+        notify "权限更新" "已完成防止编辑权限解除" "success"
+    fi 
+
+    # 处理单个文件或符号链接 
+    if [ -f "$target_path" ] || [ -L "$target_path" ]; then 
+        # 权限处理 
+        if ! sudo chmod u+w "$target_path"; then 
+            notify  "权限错误" "无法修改文件/链接权限"  "error"
+            exit 1 
+        fi 
+        notify "权限更新" "已设置文件/链接可写权限" "success"
+
+        # 删除文件或链接 
+        if sudo rm -f "$target_path"; then 
+            notify "删除成功" "已成功删除: $target_path" "success"
+        else 
+            notify  "操作异常" "删除过程中出现错误"  "error"
+            exit 1 
+        fi 
+        exit 0 
+    fi 
+
+    # 目录处理逻辑 
+    # 权限处理 
+    if ! sudo chmod -R u+w "$target_path"; then 
+        notify "权限错误" "无法修改目录权限"  "error"
+        exit 1 
+    fi 
+    notify "权限更新" "已设置目录可写权限"  "success"
+
+    # 单独处理符号链接 
+    if sudo find "$target_path" -type l -exec rm -f {} +; then 
+        notify normal "清理完成" "已删除目录中的所有符号链接"  "success"
+    else 
+        notify "操作异常" "符号链接删除过程中出现错误" "error"
+    fi 
+
+    # 文件类型处理 
+    read -p "请输入要保留的文件类型（多个用逗号分隔，留空删除所有）: " file_extension 
+
+    if [ -n "$file_extension" ]; then 
+        IFS=',' read -ra exts <<< "$file_extension" 
+        local find_args=() 
+        for ext in "${exts[@]}"; do 
+            ext=$(echo "$ext" | xargs) 
+            [ -z "$ext" ] && continue 
+            [[ "$ext" != *\** ]] && ext="*.$ext" 
+            find_args+=("-name" "$ext") 
+        done 
+
+        if [ ${#find_args[@]} -eq 0 ]; then 
+            notify "操作取消" "无效的文件类型参数" "error"
+            exit 1 
+        fi 
+
+        # 构建查找条件 
+        local condition=("!" "(") 
+        for ((i=0; i<${#find_args[@]}; i+=2)); do 
+            [ $i -gt 0 ] && condition+=("-o") 
+            condition+=("${find_args[$i]}" "${find_args[$i+1]}") 
+        done 
+        condition+=(")") 
+
+        # 执行保留删除 
+        if sudo find "$target_path" -type f "${condition[@]}" -exec rm -f {} +; then 
+            notify "清理完成" "已完成选择性文件删除" "success"
+        else 
+            notify "操作异常" "文件删除过程中出现错误" "error"
+        fi 
+    else 
+        # 全量删除 
+        if sudo find "$target_path" -type f -exec rm -f {} +; then 
+            notify "清理完成" "已删除所有文件" "success"
+        else 
+            notify  "操作异常" "全量删除过程中出现错误"  "error"
+        fi 
+    fi 
+
+    # 清理空目录 
+    sudo find "$target_path" -mindepth 1 -type d -empty -delete 2>/dev/null 
+    if [ -d "$target_path" ] && [ -z "$(ls -A "$target_path")" ]; then 
+        if sudo rmdir "$target_path"; then 
+            notify "清理完成" "已移除空目录: $target_path"  "success"
+        fi 
+    fi 
+
+    notify  "操作完成" "文件清理流程已成功结束"  "success"
+} 
+
+# 执行主函数 
+main "$@" 
+
+echo  "感谢您使用本软件，软件免费使用与更新，具体软件更新请访问以下网址：https://gitee.com/seeker_ok/file-cleaner"
+read -p "按回车键退出..." 
+exit 0 

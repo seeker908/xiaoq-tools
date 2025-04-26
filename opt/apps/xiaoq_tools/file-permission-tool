@@ -1,0 +1,145 @@
+#!/bin/bash 
+ 
+# 颜色定义 
+RED='\033[0;31m' 
+GREEN='\033[0;32m' 
+BLUE='\033[0;34m' 
+NC='\033[0m' # No Color 
+ 
+# 桌面通知函数 
+notify() { 
+    local title="$1" 
+    local message="$2" 
+    local level="$3" 
+ 
+    case "$level" in 
+        "success") 
+            color="$GREEN" 
+            urgency="normal" 
+            ;; 
+        "warning") 
+            color="$BLUE" 
+            urgency="normal" 
+            ;; 
+        "error") 
+            color="$RED" 
+            urgency="critical" 
+            ;; 
+        *) 
+            color="$NC" 
+            urgency="normal" 
+            ;; 
+    esac 
+ 
+    echo -e "${color}${message}${NC}" 
+    notify-send -u "$urgency" "$title" "$message" 
+} 
+
+# 免责申明
+notify "软件使用免责申明" "免责申明:本软件具清除【只读】 与 【防止编辑】文件及文件夹权限功能，可能造成不可逆数据损失。请在使用前仔细阅读以下条款，确认理解所有操作风险后方可继续使用。您的使用行为将视为对本协议全部条款的认可与接受。\n1.1 、使用本软件前，用户应自行对重要文件进行备份;\n1.2、本软件为免费开源程序，不提供任何形式的技术支持;\n1.3、因用户操作失误、未阅读提示、擅自修改程序等行为导致的数据损失，开发者不承担任何法律责任;\n1.4、使用本软件进行非法操作产生的后果由用户自行承担" "error"
+
+# 保存原始参数 
+ORIGINAL_ARGS=("$@") 
+ 
+# 提前获取sudo权限 
+if [ $(id -u) -ne 0 ]; then 
+    sudo -v || { notify "错误" "需要sudo权限" "error"; exit 1; } 
+    # 重新设置参数，因为sudo可能会重置它们 
+    set -- "${ORIGINAL_ARGS[@]}" 
+fi 
+ 
+# 检查是否提供了路径参数 
+if [ $# -eq 0 ]; then 
+    notify "提示" "请拖放文件/文件夹到终端或直接输入路径" "warning" 
+    read -p ": " target_path 
+else 
+    # 处理可能包含引号的路径 
+    target_path=$(printf "%s" "$*" | sed "s/'//g" | sed 's/"//g' ) 
+fi 
+ 
+# 移除路径中的单引号（拖放操作可能会添加） 
+target_path=$(echo "$target_path" | sed "s/'//g" | sed 's/"//g') 
+ 
+# 处理路径格式（兼容统信UOS和麒麟系统） 
+process_path() { 
+    local target_path="$1" 
+    # 处理file://协议路径 
+    if [[ "$target_path" == file://* ]]; then 
+        target_path="${target_path#file://}" 
+        target_path=$(echo "$target_path" | sed 's/%20/ /g') # 解码URL编码 
+    fi 
+    # 处理麒麟系统可能的多重引号问题 
+    target_path=$(echo "$target_path" | sed "s/^'\+//;s/'\+$//;s/^\"\+//;s/\"\+$//") 
+    echo "$target_path" 
+} 
+ 
+target_path=$(process_path "$target_path") 
+ 
+# 验证路径是否存在 
+if [ ! -e "$target_path" ]; then 
+    # 尝试再次处理路径，过滤file://前缀并解码 
+    new_target_path=$(process_path "$target_path") 
+    if [ -e "$new_target_path" ]; then 
+        target_path="$new_target_path" 
+    else 
+        notify "错误" "路径无效: $target_path" "error" 
+        exit 1 
+    fi 
+fi 
+ 
+# 检查是否是系统关键文件/目录 
+critical_paths=("/bin" "/sbin" "/usr/bin" "/usr/sbin" "/lib" "/usr/lib" "/lib64" "/usr/lib64"  "/etc" "/var" "/boot" "/root" "/dev" "/proc" "/sys" "/run"   "/usr/local/bin" "/usr/local/sbin"  "/home"   "/proc"   "/srv" ) 
+for critical_path in "${critical_paths[@]}"; do 
+    if [ "$target_path" = "$critical_path" ] || [[ "$target_path" == "$critical_path/"* ]]; then 
+        notify "警告" "警告: 您正在尝试删除系统关键文件或目录的权限！$critical_path" "warning" 
+        read -p "确定要继续吗？(y/n): " confirm 
+        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then 
+            exit 1 
+        fi 
+        break 
+    fi 
+done 
+ 
+# 判断是文件还是目录 
+if [ -f "$target_path" ]; then 
+    item_type="文件" 
+elif [ -d "$target_path" ]; then 
+    item_type="目录" 
+else 
+    notify "错误" "未知类型: $target_path" "error" 
+    exit 1 
+fi 
+ 
+notify "信息" "正在处理$item_type: $target_path" "success" 
+ 
+# 递归移除属性 
+remove_attributes() { 
+    local path="$1" 
+ 
+    # 如果是目录，先处理内容 
+    if [ -d "$path" ]; then 
+        find "$path" -exec bash -c ' 
+            echo "正在处理: $0" 
+            sudo chattr -i -d "$0" 2>/dev/null 
+            sudo chmod u+w "$0" 2>/dev/null 
+        ' {} \; 
+    fi 
+ 
+    # 然后处理路径本身 
+    echo "正在处理: $path" 
+    sudo chattr -i -d "$path" 2>/dev/null 
+    sudo chmod u+w "$path" 2>/dev/null 
+} 
+ 
+remove_attributes "$target_path" 
+ 
+if [ $? -eq 0 ]; then 
+    notify "成功" "成功移除$item_type的所有限制属性: $target_path" "success" 
+else 
+    notify "错误" "处理$item_type时出错: $target_path" "error" 
+fi 
+
+echo  "感谢您使用本软件，软件免费使用与更新，具体软件更新请访问以下网址：https://gitee.com/seeker_ok/file-permission-tool"
+read -p "按回车键退出..." 
+exit 0 
+ 

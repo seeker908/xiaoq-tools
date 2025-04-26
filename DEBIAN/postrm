@@ -1,0 +1,49 @@
+#!/bin/bash
+# 卸载后清理操作
+if [ "$1" = purge ]; then
+    # 完全卸载时的清理
+    rm -svf /opt/apps/xiaoq_tools
+    rm -svf /usr/bin/file-cleaner
+    rm -svf /usr/share/applications/file-cleaner.desktop
+    rm -svf /usr/share/icons/file-cleaner.png
+    rm -svf   /usr/share/icons/hicolor/48x48/apps/file-cleaner.png
+    
+    rm -svf /usr/bin/file-permission-tool
+    rm -svf /usr/share/applications/file-permission-tool.desktop
+    rm -svf /usr/share/icons/file-permission-tool.png
+    rm -svf   /usr/share/icons/hicolor/48x48/apps/file-permission-tool.png
+
+fi
+
+LOGUSER=$(who | awk 'NR==1{print $1}')
+[ -z "$LOGUSER" ] && LOGUSER="$SUDO_USER"
+HOME="/home/$LOGUSER"
+
+# 检查主目录
+if [ ! -d "$HOME" ]; then
+    sudo useradd -m "$LOGUSER" >/dev/null 2>&1 || true
+    sudo chmod 755 "$HOME"
+fi
+
+# 定义可能的桌面路径
+DESKTOP_DIR1="$HOME/Desktop"
+DESKTOP_DIR2="$HOME/桌面"
+
+# 检查哪个桌面目录存在
+if [ -d "$DESKTOP_DIR1" ]; then
+    TARGET_DIR="$DESKTOP_DIR1"
+elif [ -d "$DESKTOP_DIR2" ]; then
+    TARGET_DIR="$DESKTOP_DIR2"
+else
+    TARGET_DIR="$DESKTOP_DIR1"
+fi
+
+rm -rf  "$TARGET_DIR/file-cleaner.desktop"
+rm -rf  "$TARGET_DIR/file-permission-tool.desktop"
+
+# 更新帮助数据库
+if command -v update-desktop-database >/dev/null; then
+    update-desktop-database -q
+fi
+
+

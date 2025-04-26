@@ -1,0 +1,29 @@
+Package: xiaoq-tools
+Version: 1.00
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: email_ok <email_ok @qq.com>
+Depends: bash, libnotify-bin
+Description: 强大的文件目录清理工具
+ 本工具提供全面的文件管理功能：
+  * 多种路径输入方式（命令行/交互式/拖放）
+  * 路径验证与二次确认机制
+  * 自动权限管理
+  * 按文件类型选择性删除
+  * 空目录自动清理
+  * 桌面通知与终端反馈
+  * 使用sudo权限保障安全
+  * 批量处理能力
+ .
+ 专为需要精确控制删除操作的系统管理员设计。
+ .
+ 功能特点：
+  1) 支持路径自动处理（~和引号）
+  2) 递归权限修改与删除
+  3) 通配符文件类型过滤
+  4) 多级错误处理机制
+  5) 兼容所有标准Linux环境
+  6) 操作日志全程记录
+  7) 防止误删系统文件
+  8) 退出前自动清理

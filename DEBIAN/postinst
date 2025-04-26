@@ -1,0 +1,70 @@
+#!/bin/bash
+# 安装后设置脚本权限
+chmod 755 /opt/apps/xiaoq_tools/file-cleaner
+chmod 755 /opt/apps/xiaoq_tools/file-permission-tool
+
+ln -svf  /opt/apps/xiaoq_tools/file-cleaner   /usr/bin/file-cleaner
+ln -svf  /opt/apps/xiaoq_tools/file-permission-tool    /usr/bin/file-permission-tool
+
+chmod 644 /usr/share/icons/file-cleaner.png
+chmod 644 /usr/share/icons/file-permission-tool.png
+
+chmod 644 /usr/share/applications/file-cleaner.desktop
+chmod 644 /usr/share/applications/file-permission-tool.desktop
+
+cp -f /usr/share/icons/file-cleaner.png  /usr/share/icons/hicolor/48x48/apps/file-cleaner.png
+cp -f /usr/share/icons/file-permission-tool.png  /usr/share/icons/hicolor/48x48/apps/file-permission-tool.png
+
+# 检查依赖
+if ! command -v notify-send >/dev/null; then
+    echo "安装依赖: libnotify-bin..."
+    apt-get install -y libnotify-bin || true
+fi
+
+
+LOGUSER=$(who | awk 'NR==1{print $1}')
+[ -z "$LOGUSER" ] && LOGUSER="$SUDO_USER"
+HOME="/home/$LOGUSER"
+
+# 检查主目录
+if [ ! -d "$HOME" ]; then
+    sudo useradd -m "$LOGUSER" >/dev/null 2>&1 || true
+    sudo chmod 755 "$HOME"
+fi
+
+# 定义可能的桌面路径
+DESKTOP_DIR1="$HOME/Desktop"
+DESKTOP_DIR2="$HOME/桌面"
+
+# 源.desktop文件路径
+DESKTOP_SRC1="/usr/share/applications/file-cleaner.desktop"
+DESKTOP_SRC2="/usr/share/applications/file-permission-tool.desktop"
+
+# 检查哪个桌面目录存在
+if [ -d "$DESKTOP_DIR1" ]; then
+    TARGET_DIR="$DESKTOP_DIR1"
+elif [ -d "$DESKTOP_DIR2" ]; then
+    TARGET_DIR="$DESKTOP_DIR2"
+else
+    # 如果都不存在，尝试创建默认的Desktop目录
+    mkdir -p "$DESKTOP_DIR1"
+    TARGET_DIR="$DESKTOP_DIR1"
+fi
+
+rm -rf  "$TARGET_DIR/file-cleaner.desktop"
+rm -rf  "$TARGET_DIR/file-permission-tool.desktop"
+
+# 复制.desktop文件到目标桌面目录
+cp "$DESKTOP_SRC1" "$TARGET_DIR/"
+cp "$DESKTOP_SRC2" "$TARGET_DIR/"
+chmod +x "$TARGET_DIR/file-cleaner.desktop"
+chmod +x "$TARGET_DIR/file-permission-tool.desktop"
+
+# 刷新桌面（可选，适用于某些桌面环境）
+if command -v kylin-update-desktop-config >/dev/null 2>&1; then
+    kylin-update-desktop-config  # 银河麒麟专用刷新命令
+elif command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database  # 标准Linux刷新命令
+fi
+
+echo -e "\033[34m软件已安装成功，感谢您使用...\033[0m"

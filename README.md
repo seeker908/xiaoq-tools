@@ -4,34 +4,40 @@
 小Q工具箱：集合多种实用工具和脚本的开源项目，旨在简化日常开发任务，提升效率。集合有强制删除文件或文件夹（支持拖放）和一键清除只读不可更改权限工具
 
 #### 软件架构
-软件架构说明
+ 一、本工具提供全面的文件管理功能：
+  * 多种路径输入方式（命令行/交互式/拖放）
+  * 路径验证与二次确认机制
+  * 自动权限管理
+  * 按文件类型选择性删除
+  * 空目录自动清理
+  * 桌面通知与终端反馈
+  * 使用sudo权限保障安全
+  * 批量处理能力
+ .
+ 专为需要精确控制删除操作的系统管理员设计。
+ .
+ 功能特点：
+  1) 支持路径自动处理（~和引号）
+  2) 递归权限修改与删除
+  3) 通配符文件类型过滤
+  4) 多级错误处理机制
+  5) 兼容所有标准Linux环境
+  6) 操作日志全程记录
+  7) 防止误删系统文件
+  8) 退出前自动清理
+
+二、一个用于Linux系统的文件/文件夹权限管理工具，旨在帮助用户递归地移除文件或文件夹的不可变属性（如i属性，防止文件被删除、修改或重命名）以及设置用户可写权限。此脚本对于恢复被错误设置为只读或防止编辑的文件/文件夹特别有用。此脚本通过提供上述功能权限，帮助用户有效地管理文件/文件夹的权限，特别是在处理被错误设置为只读或防止编辑的文件/文件夹时。
 
 
-#### 安装教程
+#### 打包安装教程
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+sudo chmod 755 * -R
+dpkg -b . ../.
+安装
+sudo dpkg -i xiaoq-tools_*_all.deb
 
-#### 使用说明
+测试运行
+file-cleaner   或   file-permission-tool
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+卸载测试
+sudo apt remove xiaoq-tools

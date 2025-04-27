@@ -2,16 +2,16 @@
 # 卸载后清理操作
 if [ "$1" = purge ]; then
     # 完全卸载时的清理
-    rm -svf /opt/apps/xiaoq_tools
-    rm -svf /usr/bin/file-cleaner
-    rm -svf /usr/share/applications/file-cleaner.desktop
-    rm -svf /usr/share/icons/file-cleaner.png
-    rm -svf   /usr/share/icons/hicolor/48x48/apps/file-cleaner.png
+    rm -rf /opt/apps/xiaoq_tools
+    rm -rf /usr/bin/file-cleaner
+    rm -rf /usr/share/applications/file-cleaner.desktop
+    rm -rf /usr/share/icons/file-cleaner.png
+    rm -rf /usr/share/icons/hicolor/48x48/apps/file-cleaner.png
     
-    rm -svf /usr/bin/file-permission-tool
-    rm -svf /usr/share/applications/file-permission-tool.desktop
-    rm -svf /usr/share/icons/file-permission-tool.png
-    rm -svf   /usr/share/icons/hicolor/48x48/apps/file-permission-tool.png
+    rm -rf /usr/bin/file-permission-tool
+    rm -rf /usr/share/applications/file-permission-tool.desktop
+    rm -rf /usr/share/icons/file-permission-tool.png
+    rm -rf /usr/share/icons/hicolor/48x48/apps/file-permission-tool.png
 
 fi
 

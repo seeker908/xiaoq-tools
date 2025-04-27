@@ -32,12 +32,18 @@
 #### 打包安装教程
 
 sudo chmod 755 * -R
+
 dpkg -b . ../.
+
+
 安装
+
 sudo dpkg -i xiaoq-tools_*_all.deb
+
 
 测试运行
 file-cleaner   或   file-permission-tool
+
 
 卸载测试
 sudo apt remove xiaoq-tools

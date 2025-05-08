@@ -3,7 +3,7 @@ Version: 1.03
 Section: utils
 Priority: optional
 Architecture: all
-Maintainer: email_ok <email_ok @qq.com>
+Maintainer: email_ok<email_ok@qq.com>
 Depends: bash, libnotify-bin
 Description: 强大的文件目录清理工具
  本工具提供全面的文件管理功能：

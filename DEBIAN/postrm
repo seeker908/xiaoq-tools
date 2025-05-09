@@ -1,17 +1,20 @@
 #!/bin/bash
 # 卸载后清理操作
+app_name1=file-cleaner
+app_name2=file-permission-tool
+
 if [ "$1" = purge ]; then
     # 完全卸载时的清理
     rm -rf /opt/apps/xiaoq_tools
-    rm -rf /usr/bin/file-cleaner
-    rm -rf /usr/share/applications/file-cleaner.desktop
-    rm -rf /usr/share/icons/file-cleaner.png
-    rm -rf /usr/share/icons/hicolor/48x48/apps/file-cleaner.png
+    rm -rf /usr/bin/$app_name1
+    rm -rf /usr/share/applications/$app_name1.desktop
+    rm -rf /usr/share/icons/$app_name1.png
+    rm -rf /usr/share/icons/hicolor/48x48/apps/$app_name1.png
     
-    rm -rf /usr/bin/file-permission-tool
-    rm -rf /usr/share/applications/file-permission-tool.desktop
-    rm -rf /usr/share/icons/file-permission-tool.png
-    rm -rf /usr/share/icons/hicolor/48x48/apps/file-permission-tool.png
+    rm -rf /usr/bin/$app_name2
+    rm -rf /usr/share/applications/$app_name2.desktop
+    rm -rf /usr/share/icons/$app_name2.png
+    rm -rf /usr/share/icons/hicolor/48x48/apps/$app_name2.png
 
 fi
 
@@ -38,8 +41,8 @@ else
     TARGET_DIR="$DESKTOP_DIR1"
 fi
 
-rm -rf  "$TARGET_DIR/file-cleaner.desktop"
-rm -rf  "$TARGET_DIR/file-permission-tool.desktop"
+rm -rf  "$TARGET_DIR/$app_name1.desktop"
+rm -rf  "$TARGET_DIR/$app_name2.desktop"
 
 # 更新帮助数据库
 if command -v update-desktop-database >/dev/null; then

@@ -1,19 +1,26 @@
 #!/bin/bash
 # 安装后设置脚本权限
-chmod 755 /opt/apps/xiaoq_tools/file-cleaner
-chmod 755 /opt/apps/xiaoq_tools/file-permission-tool
+#设置调用名称
+app_name1=file-cleaner
+app_name2=file-permission-tool
 
-ln -svf  /opt/apps/xiaoq_tools/file-cleaner   /usr/bin/file-cleaner
-ln -svf  /opt/apps/xiaoq_tools/file-permission-tool    /usr/bin/file-permission-tool
+#$app_name1
+#$app_name2
 
-chmod 644 /usr/share/icons/file-cleaner.png
-chmod 644 /usr/share/icons/file-permission-tool.png
+chmod 755 /opt/apps/xiaoq_tools/$app_name1
+chmod 755 /opt/apps/xiaoq_tools/$app_name2
 
-chmod 644 /usr/share/applications/file-cleaner.desktop
-chmod 644 /usr/share/applications/file-permission-tool.desktop
+ln -svf  /opt/apps/xiaoq_tools/$app_name1   /usr/bin/$app_name1
+ln -svf  /opt/apps/xiaoq_tools/$app_name2    /usr/bin/$app_name2
 
-cp -f /usr/share/icons/file-cleaner.png  /usr/share/icons/hicolor/48x48/apps/file-cleaner.png
-cp -f /usr/share/icons/file-permission-tool.png  /usr/share/icons/hicolor/48x48/apps/file-permission-tool.png
+chmod 644 /usr/share/icons/$app_name1.png
+chmod 644 /usr/share/icons/$app_name2.png
+
+chmod 644 /usr/share/applications/$app_name1.desktop
+chmod 644 /usr/share/applications/$app_name2.desktop
+
+cp -f /usr/share/icons/$app_name1.png  /usr/share/icons/hicolor/48x48/apps/$app_name1.png
+cp -f /usr/share/icons/$app_name2.png  /usr/share/icons/hicolor/48x48/apps/$app_name2.png
 
 # 检查依赖
 if ! command -v notify-send >/dev/null; then
@@ -37,8 +44,8 @@ DESKTOP_DIR1="$HOME/Desktop"
 DESKTOP_DIR2="$HOME/桌面"
 
 # 源.desktop文件路径
-DESKTOP_SRC1="/usr/share/applications/file-cleaner.desktop"
-DESKTOP_SRC2="/usr/share/applications/file-permission-tool.desktop"
+DESKTOP_SRC1="/usr/share/applications/$app_name1.desktop"
+DESKTOP_SRC2="/usr/share/applications/$app_name2.desktop"
 
 # 检查哪个桌面目录存在
 if [ -d "$DESKTOP_DIR1" ]; then
@@ -51,23 +58,23 @@ else
     TARGET_DIR="$DESKTOP_DIR1"
 fi
 
-rm -rf  "$TARGET_DIR/file-cleaner.desktop"
-rm -rf  "$TARGET_DIR/file-permission-tool.desktop"
+rm -rf  "$TARGET_DIR/$app_name1.desktop"
+rm -rf  "$TARGET_DIR/$app_name2.desktop"
 
 # 复制.desktop文件到目标桌面目录
 cp "$DESKTOP_SRC1" "$TARGET_DIR/"
 cp "$DESKTOP_SRC2" "$TARGET_DIR/"
-chmod +x "$TARGET_DIR/file-cleaner.desktop"
-chmod +x "$TARGET_DIR/file-permission-tool.desktop"
+chmod +x "$TARGET_DIR/$app_name1.desktop"
+chmod +x "$TARGET_DIR/$app_name2.desktop"
 
 # 修改权限为-rwx------ (700)
-chmod 700 "$TARGET_DIR/file-cleaner.desktop"
-chmod 700 "$TARGET_DIR/file-permission-tool.desktop"
+chmod 700 "$TARGET_DIR/$app_name1.desktop"
+chmod 700 "$TARGET_DIR/$app_name2.desktop"
 
 # 修改文件所有者为当前用户
 if [ -n "$LOGUSER" ]; then
-    chown "$LOGUSER:$LOGUSER" "$TARGET_DIR/file-cleaner.desktop"
-    chown "$LOGUSER:$LOGUSER" "$TARGET_DIR/file-permission-tool.desktop"
+    chown "$LOGUSER:$LOGUSER" "$TARGET_DIR/$app_name1.desktop"
+    chown "$LOGUSER:$LOGUSER" "$TARGET_DIR/$app_name2.desktop"
 else
     echo -e "\033[33m警告：无法确定当前用户，跳过修改文件所有者\033[0m" >&2
 fi
@@ -98,8 +105,8 @@ update_defaults_list() {
     done
 }
 
-update_defaults_list "file-cleaner.desktop"
-update_defaults_list "file-permission-tool.desktop"
+update_defaults_list "$app_name1.desktop"
+update_defaults_list "$app_name2.desktop"
 
 # 5. 更新系统数据库
 update-mime-database /usr/share/mime || true

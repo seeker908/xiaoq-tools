@@ -60,6 +60,54 @@ cp "$DESKTOP_SRC2" "$TARGET_DIR/"
 chmod +x "$TARGET_DIR/file-cleaner.desktop"
 chmod +x "$TARGET_DIR/file-permission-tool.desktop"
 
+# 修改权限为-rwx------ (700)
+chmod 700 "$TARGET_DIR/file-cleaner.desktop"
+chmod 700 "$TARGET_DIR/file-permission-tool.desktop"
+
+chmod +x "$TARGET_DIR/file-cleaner.desktop"
+chmod +x "$TARGET_DIR/file-permission-tool.desktop"
+# 修改文件所有者为当前用户
+if [ -n "$LOGUSER" ]; then
+    chown "$LOGUSER:$LOGUSER" "$TARGET_DIR/file-cleaner.desktop"
+    chown "$LOGUSER:$LOGUSER" "$TARGET_DIR/file-permission-tool.desktop"
+else
+    echo -e "\033[33m警告：无法确定当前用户，跳过修改文件所有者\033[0m" >&2
+fi
+
+
+# 4. 更新 MIME 关联
+update_defaults_list() {
+    local DEFAULTS_LIST="/usr/share/applications/defaults.list"
+    [ ! -f "${DEFAULTS_LIST}" ] && return 0
+
+    local desktop_file="/usr/share/applications/$1"
+    [ ! -f "$desktop_file" ] && return 0
+
+    # 提取 MIME 类型
+    local mime_types=$(grep '^MimeType=' "$desktop_file" | cut -d'=' -f2- | tr ';' ' ')
+
+    for mime_type in $mime_types; do
+        if grep -q "^${mime_type}=" "$DEFAULTS_LIST"; then
+            if ! grep -q "^${mime_type}=.*$1" "$DEFAULTS_LIST"; then
+                local default_apps=$(grep "^${mime_type}=" "$DEFAULTS_LIST" | cut -d'=' -f2-)
+                grep -v "^${mime_type}=" "$DEFAULTS_LIST" > "${DEFAULTS_LIST}.new"
+                echo "${mime_type}=${default_apps};$1" >> "${DEFAULTS_LIST}.new"
+                mv "${DEFAULTS_LIST}.new" "$DEFAULTS_LIST"
+            fi
+        else
+            echo "${mime_type}=$1;" >> "$DEFAULTS_LIST"
+        fi
+    done
+}
+
+update_defaults_list "file-cleaner.desktop"
+update_defaults_list "file-permission-tool.desktop"
+
+# 5. 更新系统数据库
+update-mime-database /usr/share/mime || true
+update-desktop-database /usr/share/applications || true
+gtk-update-icon-cache /usr/share/icons/hicolor || true
+
 # 刷新桌面（可选，适用于某些桌面环境）
 if command -v kylin-update-desktop-config >/dev/null 2>&1; then
     kylin-update-desktop-config  # 银河麒麟专用刷新命令

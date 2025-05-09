@@ -64,8 +64,6 @@ chmod +x "$TARGET_DIR/file-permission-tool.desktop"
 chmod 700 "$TARGET_DIR/file-cleaner.desktop"
 chmod 700 "$TARGET_DIR/file-permission-tool.desktop"
 
-chmod +x "$TARGET_DIR/file-cleaner.desktop"
-chmod +x "$TARGET_DIR/file-permission-tool.desktop"
 # 修改文件所有者为当前用户
 if [ -n "$LOGUSER" ]; then
     chown "$LOGUSER:$LOGUSER" "$TARGET_DIR/file-cleaner.desktop"

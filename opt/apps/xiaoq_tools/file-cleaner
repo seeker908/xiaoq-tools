@@ -198,7 +198,7 @@ fi
         notify "权限更新" "已设置文件/链接可写权限" "success"
 
         # 删除文件或链接 
-        if sudo rm -f "$target_path"; then 
+        if sudo rm -fv "$target_path"; then 
             notify "删除成功" "已成功删除: $target_path" "success"
         else 
             notify  "操作异常" "删除过程中出现错误"  "error"
@@ -216,7 +216,7 @@ fi
     notify "权限更新" "已设置目录可写权限"  "success"
 
     # 单独处理符号链接 
-    if sudo find "$target_path" -type l -exec rm -f {} +; then 
+    if sudo find "$target_path" -type l -exec rm -fv {} +; then 
         notify normal "清理完成" "已删除目录中的所有符号链接"  "success"
     else 
         notify "操作异常" "符号链接删除过程中出现错误" "error"
@@ -249,14 +249,14 @@ fi
         condition+=(")") 
 
         # 执行保留删除 
-        if sudo find "$target_path" -type f "${condition[@]}" -exec rm -f {} +; then 
+        if sudo find "$target_path" -type f "${condition[@]}" -exec rm -fv {} +; then 
             notify "清理完成" "已完成选择性文件删除" "success"
         else 
             notify "操作异常" "文件删除过程中出现错误" "error"
         fi 
     else 
         # 全量删除 
-        if sudo find "$target_path" -type f -exec rm -f {} +; then 
+        if sudo find "$target_path" -type f -exec rm -fv {} +; then 
             notify "清理完成" "已删除所有文件" "success"
         else 
             notify  "操作异常" "全量删除过程中出现错误"  "error"

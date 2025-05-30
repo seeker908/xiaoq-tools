@@ -1,5 +1,4 @@
 #!/bin/bash 
-
 # 颜色定义 
 RED='\033[0;31m' 
 GREEN='\033[0;32m' 
@@ -47,7 +46,7 @@ is_critical_file() {
     local critical_paths=( 
         "/bin" "/sbin" "/usr/bin" "/usr/sbin" "/lib" "/usr/lib" "/lib64" "/usr/lib64" 
         "/etc" "/var" "/boot" "/root" "/dev" "/proc" "/sys" "/run" 
-        "/usr/local/bin" "/usr/local/sbin"  "/home"   "/proc"   "/srv"
+        "/usr/local/bin" "/usr/local/sbin"  "/home"   "/proc"   "/srv"   "/backup"
     ) 
 
     # 检查是否是系统关键文件 
@@ -107,7 +106,6 @@ remove_immutable_flags() {
 
         $success && return 0 || return 1 
     fi 
-
     return 0 
 } 
 

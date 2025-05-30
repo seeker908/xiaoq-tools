@@ -129,7 +129,7 @@ fi
 
 # 检查是否提供了路径参数 
 if [ $# -eq 0 ]; then 
-     notify  "提示" "提示:请拖放文件/文件夹到终端或直接输入路径" "warning"   "/usr/share/icons/file-cleaner.png"
+     echo -e "\n\033[34m 提示:请拖放文件/文件夹到终端或直接输入路径\033[0m"
      read -p ": " target_path 
 else 
     # 处理可能包含引号的路径 
@@ -166,7 +166,7 @@ fi
         read -p "这可能导致系统不稳定或无法启动！确定要继续吗？(y/n): " confirm 
         confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')  # 转换为小写 
         if [ "$confirm" != "y" ]; then 
-            notify  "操作取消" "用户取消删除系统关键文件" "error"   "/usr/share/icons/file-cleaner.png"
+            echo -e "\n\033[34m 操作取消:用户取消删除系统关键文件\033[0m"
             exit 1 
         fi 
     fi 
@@ -176,7 +176,7 @@ fi
     read -p "请再次确认路径是否正确 (y/n): " confirm 
     confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')  # 转换为小写 
     if [ "$confirm" != "y" ]; then 
-        notify "操作取消" "用户取消删除操作" "error"   "/usr/share/icons/file-cleaner.png"
+        echo -e "\n\033[34m 操作取消:用户取消删除系统关键文件\033[0m"
         exit 1 
     fi 
 
@@ -186,7 +186,7 @@ fi
     remove_immutable=$(echo "$remove_immutable" | tr '[:upper:]' '[:lower:]')  # 转换为小写 
     if [ "$remove_immutable" = "y" ]; then 
         if ! remove_immutable_flags "$target_path"; then 
-            notify "操作失败" "解除防止编辑权限时出错"  "error"   "/usr/share/icons/file-cleaner.png"
+            echo -e "\n\033[34m 操作失败:解除防止编辑权限时出错\033[0m"
             exit 1 
         fi 
         notify "权限更新" "已完成防止编辑权限解除" "success"   "/usr/share/icons/file-cleaner.png"

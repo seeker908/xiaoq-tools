@@ -11,7 +11,8 @@ notify() {
     local title="$1" 
     local message="$2" 
     local level="$3" 
- 
+    local icon="${4:-}"  # 可选参数：图标路径
+    
     case "$level" in 
         "success") 
             color="$GREEN" 
@@ -32,11 +33,16 @@ notify() {
     esac 
  
     echo -e "${color}${message}${NC}" 
-    notify-send -u "$urgency" "$title" "$message" 
+        # 带图标和不带图标的两种调用方式
+    if [[ -n "$icon" ]]; then
+        notify-send -u "$urgency" -i "$icon" "$title" "$message" 2>/dev/null || true
+    else
+        notify-send -u "$urgency" "$title" "$message" 2>/dev/null || true
+    fi
 } 
 
 # 免责申明
-notify "软件使用免责申明" "免责申明:本软件具清除【只读】 与 【防止编辑】文件及文件夹权限功能，可能造成不可逆数据损失。请在使用前仔细阅读以下条款，确认理解所有操作风险后方可继续使用。您的使用行为将视为对本协议全部条款的认可与接受。\n1.1 、使用本软件前，用户应自行对重要文件进行备份;\n1.2、本软件为免费开源程序，不提供任何形式的技术支持;\n1.3、因用户操作失误、未阅读提示、擅自修改程序等行为导致的数据损失，开发者不承担任何法律责任;\n1.4、使用本软件进行非法操作产生的后果由用户自行承担" "error"
+notify "软件使用免责申明" "免责申明:本软件具清除【只读】 与 【防止编辑】文件及文件夹权限功能，可能造成不可逆数据损失。请在使用前仔细阅读以下条款，确认理解所有操作风险后方可继续使用。您的使用行为将视为对本协议全部条款的认可与接受。\n1.1 、使用本软件前，用户应自行对重要文件进行备份;\n1.2、本软件为免费开源程序，不提供任何形式的技术支持;\n1.3、因用户操作失误、未阅读提示、擅自修改程序等行为导致的数据损失，开发者不承担任何法律责任;\n1.4、使用本软件进行非法操作产生的后果由用户自行承担" "error"  "/usr/share/icons/file-permission-tool.png"
 
 echo -ne "\e]2;一键清除只读不可更改权限\a"
 
@@ -52,7 +58,7 @@ fi
  
 # 检查是否提供了路径参数 
 if [ $# -eq 0 ]; then 
-    notify "提示" "请拖放文件/文件夹到终端或直接输入路径" "warning" 
+    notify "提示" "请拖放文件/文件夹到终端或直接输入路径" "warning"    "/usr/share/icons/file-permission-tool.png"
     read -p ": " target_path 
 else 
     # 处理可能包含引号的路径 
@@ -93,7 +99,7 @@ fi
 critical_paths=("/bin" "/sbin" "/usr/bin" "/usr/sbin" "/lib" "/usr/lib" "/lib64" "/usr/lib64"  "/etc" "/var" "/boot" "/root" "/dev" "/proc" "/sys" "/run"   "/usr/local/bin" "/usr/local/sbin"  "/home"   "/proc"   "/srv" ) 
 for critical_path in "${critical_paths[@]}"; do 
     if [ "$target_path" = "$critical_path" ] || [[ "$target_path" == "$critical_path/"* ]]; then 
-        notify "警告" "警告: 您正在尝试删除系统关键文件或目录的权限！$critical_path" "warning" 
+        notify "警告" "警告: 您正在尝试删除系统关键文件或目录的权限！$critical_path" "warning"   "/usr/share/icons/file-permission-tool.png"
         read -p "确定要继续吗？(y/n): " confirm 
         if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then 
             exit 1 
@@ -108,11 +114,11 @@ if [ -f "$target_path" ]; then
 elif [ -d "$target_path" ]; then 
     item_type="目录" 
 else 
-    notify "错误" "未知类型: $target_path" "error" 
+    notify "错误" "未知类型: $target_path" "error"   "/usr/share/icons/file-permission-tool.png"
     exit 1 
 fi 
  
-notify "信息" "正在处理$item_type: $target_path" "success" 
+notify "信息" "正在处理$item_type: $target_path" "success"   "/usr/share/icons/file-permission-tool.png"
  
 # 递归移除属性 
 remove_attributes() { 
@@ -136,9 +142,9 @@ remove_attributes() {
 remove_attributes "$target_path" 
  
 if [ $? -eq 0 ]; then 
-    notify "成功" "成功移除$item_type的所有限制属性: $target_path" "success" 
+    notify "成功" "成功移除$item_type的所有限制属性: $target_path" "success"   "/usr/share/icons/file-permission-tool.png"
 else 
-    notify "错误" "处理$item_type时出错: $target_path" "error" 
+    notify "错误" "处理$item_type时出错: $target_path" "error"   "/usr/share/icons/file-permission-tool.png"
 fi 
 
 echo  "感谢您使用本软件，软件免费使用与更新，具体软件更新请访问以下网址：https://gitee.com/seeker_ok/file-permission-tool"

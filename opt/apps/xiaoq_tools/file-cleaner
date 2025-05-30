@@ -10,7 +10,8 @@ notify() {
     local title="$1" 
     local message="$2" 
     local level="$3" 
- 
+    local icon="${4:-}"  # 可选参数：图标路径
+     
     case "$level" in 
         "success") 
             color="$GREEN" 
@@ -31,11 +32,16 @@ notify() {
     esac 
  
     echo -e "${color}${message}${NC}" 
-    notify-send -u "$urgency" "$title" "$message"  2>/dev/null || true
+    # 带图标和不带图标的两种调用方式
+    if [[ -n "$icon" ]]; then
+        notify-send -u "$urgency" -i "$icon" "$title" "$message" 2>/dev/null || true
+    else
+        notify-send -u "$urgency" "$title" "$message" 2>/dev/null || true
+    fi
 } 
 
 # 免责申明
-notify "软件使用免责申明" "免责申明:本软件具备【强制删除】文件及文件夹功能，可能造成不可逆数据损失。请在使用前仔细阅读以下条款，确认理解所有操作风险后方可继续使用。您的使用行为将视为对本协议全部条款的认可与接受。\n1.1 、使用本软件前，用户应自行对重要文件进行备份;\n1.2、本软件为免费开源程序，不提供任何形式的技术支持;\n1.3、因用户操作失误、未阅读提示、擅自修改程序等行为导致的数据损失，开发者不承担任何法律责任;\n1.4、使用本软件进行非法操作产生的后果由用户自行承担" "error"
+notify "软件使用免责申明" "免责申明:本软件具备【强制删除】文件及文件夹功能，可能造成不可逆数据损失。请在使用前仔细阅读以下条款，确认理解所有操作风险后方可继续使用。您的使用行为将视为对本协议全部条款的认可与接受。\n1.1 、使用本软件前，用户应自行对重要文件进行备份;\n1.2、本软件为免费开源程序，不提供任何形式的技术支持;\n1.3、因用户操作失误、未阅读提示、擅自修改程序等行为导致的数据损失，开发者不承担任何法律责任;\n1.4、使用本软件进行非法操作产生的后果由用户自行承担" "error"  "/usr/share/icons/file-cleaner.png"
 
 echo -ne "\e]2;强制删除文件或文件夹（支持拖放）\a"
 
@@ -64,7 +70,7 @@ remove_immutable_flags() {
 
     # 检查文件/目录是否存在 
     if [ ! -e "$target" ]; then 
-        notify "路径错误" "目标不存在: $target" "error"
+        notify "路径错误" "目标不存在: $target" "error"   "/usr/share/icons/file-cleaner.png"
         return 1 
     fi 
 
@@ -72,10 +78,10 @@ remove_immutable_flags() {
     if [ -f "$target" ] || [ -L "$target" ]; then 
         if lsattr "$target" 2>/dev/null | grep -q "i"; then 
             if ! sudo chattr -i "$target"; then 
-                notify "权限错误" "无法移除文件的不可变标志"  "error"
+                notify "权限错误" "无法移除文件的不可变标志"  "error"   "/usr/share/icons/file-cleaner.png"
                 return 1 
             fi 
-            notify "权限更新" "已移除不可变标志: $target"  "success"
+            notify "权限更新" "已移除不可变标志: $target"  "success"   "/usr/share/icons/file-cleaner.png"
         fi 
         return 0 
     fi 
@@ -85,10 +91,10 @@ remove_immutable_flags() {
         # 处理目录本身 
         if lsattr -d "$target" 2>/dev/null | grep -q "i"; then 
             if ! sudo chattr -i "$target"; then 
-                notify  "权限错误" "无法移除目录的不可变标志"   "error"
+                notify  "权限错误" "无法移除目录的不可变标志"   "error"   "/usr/share/icons/file-cleaner.png"
                 return 1 
             fi 
-            notify "权限更新" "已移除目录不可变标志: $target"  "success"
+            notify "权限更新" "已移除目录不可变标志: $target"  "success"   "/usr/share/icons/file-cleaner.png"
         fi 
 
         # 递归处理目录内容 
@@ -96,10 +102,10 @@ remove_immutable_flags() {
         while IFS= read -r -d $'\0' item; do 
             if lsattr "$item" 2>/dev/null | grep -q "i"; then 
                 if ! sudo chattr -i -R "$item"; then 
-                    notify "权限错误" "无法移除项目的不可变标志: $item"    "error"
+                    notify "权限错误" "无法移除项目的不可变标志: $item"    "error"   "/usr/share/icons/file-cleaner.png"
                     success=false 
                 else 
-                    notify "权限更新" "已移除不可变标志: $item"  "success"
+                    notify "权限更新" "已移除不可变标志: $item"  "success"    "/usr/share/icons/file-cleaner.png"
                 fi 
             fi 
         done < <(sudo find "$target" -exec printf '%s\0' {} + 2>/dev/null) 
@@ -123,7 +129,7 @@ fi
 
 # 检查是否提供了路径参数 
 if [ $# -eq 0 ]; then 
-     notify  "提示" "提示:请拖放文件/文件夹到终端或直接输入路径" "warning"
+     notify  "提示" "提示:请拖放文件/文件夹到终端或直接输入路径" "warning"   "/usr/share/icons/file-cleaner.png"
      read -p ": " target_path 
 else 
     # 处理可能包含引号的路径 
@@ -150,7 +156,7 @@ target_path=$(process_path "$target_path")
 
 # 验证路径是否存在 
 if [ ! -e "$target_path" ]; then 
-    notify "错误" "路径无效: $target_path" "error" 
+    notify "错误" "路径无效: $target_path" "error"    "/usr/share/icons/file-cleaner.png"
     exit 1 
 fi 
 
@@ -160,7 +166,7 @@ fi
         read -p "这可能导致系统不稳定或无法启动！确定要继续吗？(y/n): " confirm 
         confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')  # 转换为小写 
         if [ "$confirm" != "y" ]; then 
-            notify  "操作取消" "用户取消删除系统关键文件" "error"
+            notify  "操作取消" "用户取消删除系统关键文件" "error"   "/usr/share/icons/file-cleaner.png"
             exit 1 
         fi 
     fi 
@@ -170,7 +176,7 @@ fi
     read -p "请再次确认路径是否正确 (y/n): " confirm 
     confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')  # 转换为小写 
     if [ "$confirm" != "y" ]; then 
-        notify "操作取消" "用户取消删除操作" "error"
+        notify "操作取消" "用户取消删除操作" "error"   "/usr/share/icons/file-cleaner.png"
         exit 1 
     fi 
 
@@ -180,26 +186,26 @@ fi
     remove_immutable=$(echo "$remove_immutable" | tr '[:upper:]' '[:lower:]')  # 转换为小写 
     if [ "$remove_immutable" = "y" ]; then 
         if ! remove_immutable_flags "$target_path"; then 
-            notify "操作失败" "解除防止编辑权限时出错"  "error"
+            notify "操作失败" "解除防止编辑权限时出错"  "error"   "/usr/share/icons/file-cleaner.png"
             exit 1 
         fi 
-        notify "权限更新" "已完成防止编辑权限解除" "success"
+        notify "权限更新" "已完成防止编辑权限解除" "success"   "/usr/share/icons/file-cleaner.png"
     fi 
 
     # 处理单个文件或符号链接 
     if [ -f "$target_path" ] || [ -L "$target_path" ]; then 
         # 权限处理 
         if ! sudo chmod u+w "$target_path"; then 
-            notify  "权限错误" "无法修改文件/链接权限"  "error"
+            notify  "权限错误" "无法修改文件/链接权限"  "error"   "/usr/share/icons/file-cleaner.png"
             exit 1 
         fi 
-        notify "权限更新" "已设置文件/链接可写权限" "success"
+        notify "权限更新" "已设置文件/链接可写权限" "success"   "/usr/share/icons/file-cleaner.png"
 
         # 删除文件或链接 
         if sudo rm -fv "$target_path"; then 
-            notify "删除成功" "已成功删除: $target_path" "success"
+            notify "删除成功" "已成功删除: $target_path" "success"   "/usr/share/icons/file-cleaner.png"
         else 
-            notify  "操作异常" "删除过程中出现错误"  "error"
+            notify  "操作异常" "删除过程中出现错误"  "error"   "/usr/share/icons/file-cleaner.png"
             exit 1 
         fi 
         exit 0 
@@ -208,16 +214,16 @@ fi
     # 目录处理逻辑 
     # 权限处理 
     if ! sudo chmod -R u+w "$target_path"; then 
-        notify "权限错误" "无法修改目录权限"  "error"
+        notify "权限错误" "无法修改目录权限"  "error"   "/usr/share/icons/file-cleaner.png"
         exit 1 
     fi 
-    notify "权限更新" "已设置目录可写权限"  "success"
+    notify "权限更新" "已设置目录可写权限"  "success"   "/usr/share/icons/file-cleaner.png"
 
     # 单独处理符号链接 
     if sudo find "$target_path" -type l -exec rm -fv {} +; then 
-        notify normal "清理完成" "已删除目录中的所有符号链接"  "success"
+        notify normal "清理完成" "已删除目录中的所有符号链接"  "success"   "/usr/share/icons/file-cleaner.png"
     else 
-        notify "操作异常" "符号链接删除过程中出现错误" "error"
+        notify "操作异常" "符号链接删除过程中出现错误" "error"   "/usr/share/icons/file-cleaner.png"
     fi 
 
     # 文件类型处理 
@@ -234,7 +240,7 @@ fi
         done 
 
         if [ ${#find_args[@]} -eq 0 ]; then 
-            notify "操作取消" "无效的文件类型参数" "error"
+            notify "操作取消" "无效的文件类型参数" "error"  "/usr/share/icons/file-cleaner.png"
             exit 1 
         fi 
 
@@ -248,16 +254,16 @@ fi
 
         # 执行保留删除 
         if sudo find "$target_path" -type f "${condition[@]}" -exec rm -fv {} +; then 
-            notify "清理完成" "已完成选择性文件删除" "success"
+            notify "清理完成" "已完成选择性文件删除" "success"  "/usr/share/icons/file-cleaner.png"
         else 
-            notify "操作异常" "文件删除过程中出现错误" "error"
+            notify "操作异常" "文件删除过程中出现错误" "error"  "/usr/share/icons/file-cleaner.png"
         fi 
     else 
         # 全量删除 
         if sudo find "$target_path" -type f -exec rm -fv {} +; then 
-            notify "清理完成" "已删除所有文件" "success"
+            notify "清理完成" "已删除所有文件" "success"  "/usr/share/icons/file-cleaner.png"
         else 
-            notify  "操作异常" "全量删除过程中出现错误"  "error"
+            notify  "操作异常" "全量删除过程中出现错误"  "error"  "/usr/share/icons/file-cleaner.png"
         fi 
     fi 
 
@@ -265,11 +271,11 @@ fi
     sudo find "$target_path" -mindepth 1 -type d -empty -delete 2>/dev/null 
     if [ -d "$target_path" ] && [ -z "$(ls -A "$target_path")" ]; then 
         if sudo rmdir "$target_path"; then 
-            notify "清理完成" "已移除空目录: $target_path"  "success"
+            notify "清理完成" "已移除空目录: $target_path"  "success"  "/usr/share/icons/file-cleaner.png"
         fi 
     fi 
 
-    notify  "操作完成" "文件清理流程已成功结束"  "success"
+    notify  "操作完成" "文件清理流程已成功结束"  "success"  "/usr/share/icons/file-cleaner.png"
 } 
 
 # 执行主函数 

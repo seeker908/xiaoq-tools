@@ -1,0 +1,5 @@
+#!/bin/sh
+# DEBIAN/prerm
+# 卸载前脚本
+
+echo "卸载开始中"

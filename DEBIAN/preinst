@@ -1,0 +1,37 @@
+#!/bin/sh
+# DEBIAN/preinst
+# 软件安装前执行脚本，常用于更新前终止进程
+
+packageName="xiaoq-tools"
+version="1.06"
+
+# 版本检测（支持升级场景）
+if [ "$1" = "upgrade" ]; then
+    if dpkg-query -W "${packageName}" 2>/dev/null | grep -q "${version}"; then
+        echo "\033[34m检测到旧版 ${packageName} (${version})，准备升级...\033[0m"
+    fi
+fi
+
+# 终止旧进程
+if pgrep -x "${packageName}" >/dev/null; then
+    echo "停止正在运行的 ${packageName} 进程..."
+    pkill -x "${packageName}" || exit 1
+    sleep 2  # 等待进程释放资源
+fi
+
+
+# 检查用户是否有权限安装软件
+if ! sudo -v; then
+    echo "无法验证权限，请输入管理员密码"
+    exit 1
+fi
+ 
+# 下面的命令将以root权限执行
+
+
+echo "预安装检查完成"
+exit 0
+ 
+ 
+ 
+ 

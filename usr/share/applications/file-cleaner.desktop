@@ -2,7 +2,7 @@
 Name=File Cleaner
 Name[zh_CN]=强制删除文件或文件夹
 Comment=Clean files and directories
-Exec=/opt/apps/xiaoq_tools/file-cleaner %F
+Exec=/opt/apps/xiaoq-tools/file-cleaner %F
 Icon=/usr/share/icons/file-cleaner.png
 Terminal=true
 Type=Application

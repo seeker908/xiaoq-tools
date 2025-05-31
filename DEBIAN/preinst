@@ -1,68 +1,71 @@
-#!/bin/sh
-# 软件安装前执行脚本，常用于更新前终止进程
+#!/bin/bash
 set -euo pipefail
 
-# 定义颜色代码
+# 定义颜色代码(兼容POSIX)
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# 多路径查找control文件
+# 兼容性control文件查找(不使用数组)
 find_control_file() {
-    [ -f "${DPKG_MAINTSCRIPT_DIR:-/var/lib/dpkg/tmp.ci}/control" ] && \
-        echo "${DPKG_MAINTSCRIPT_DIR:-/var/lib/dpkg/tmp.ci}/control" && return
-    [ -f "/var/lib/dpkg/info/${PACKAGE}.control" ] && \
-        echo "/var/lib/dpkg/info/${PACKAGE}.control" && return
-    [ -f "$(dirname "$0")/../control" ] && \
-        echo "$(dirname "$0")/../control" && return
-    [ -f "/usr/share/doc/${PACKAGE}/control" ] && \
-        echo "/usr/share/doc/${PACKAGE}/control" && return
+    local pkg=${PACKAGE:-$1}
+    local paths="
+        ${DPKG_MAINTSCRIPT_DIR:-/var/lib/dpkg/tmp.ci}/control
+        /var/lib/dpkg/info/${pkg}.control
+        /var/lib/dpkg/info/${pkg}.list
+        $(dirname "$0")/../control
+        /usr/share/doc/${pkg}/control
+        /DEBIAN/control
+    "
+    
+    for path in $paths; do
+        [ -f "$path" ] && { echo "$path"; return 0; }
+    done
     return 1
 }
 
-# 解析包信息
-CONTROL_FILE=$(find_control_file) || {
+PACKAGE=${PACKAGE:-${1:-}}
+CONTROL_FILE=$(find_control_file "$PACKAGE") || {
     echo -e "${RED}错误：无法定位control文件${NC}" >&2
     exit 1
 }
+
 PACKAGE=$(awk -F':[[:space:]]+' '/^Package:/{print $2; exit}' "$CONTROL_FILE")
 VERSION=$(awk -F':[[:space:]]+' '/^Version:/{print $2; exit}' "$CONTROL_FILE")
 
-# 版本检测逻辑
-case "$1" in
+[ -z "$PACKAGE" ] && { echo -e "${RED}错误：无法解析包名${NC}" >&2; exit 1; }
+[ -z "$VERSION" ] && { echo -e "${RED}错误：无法解析版本号${NC}" >&2; exit 1; }
+
+case "${1:-install}" in
     upgrade|install|reinstall)
         if command -v dpkg-query >/dev/null; then
             OLD_VERSION=$(dpkg-query -W -f='${Version}' "$PACKAGE" 2>/dev/null || true)
             if [ -n "$OLD_VERSION" ]; then
                 if dpkg --compare-versions "$OLD_VERSION" eq "$VERSION"; then
-                    echo "${YELLOW}提示：相同版本 或 第一次安装 ($VERSION)${NC}" >&2
+                    echo -e  "${YELLOW}提示：相同版本 ($VERSION)${NC}" >&2
                 elif dpkg --compare-versions "$OLD_VERSION" lt "$VERSION"; then
-                    echo "${GREEN}升级: $OLD_VERSION -> $VERSION${NC}"
+                    echo -e  "${GREEN}升级: $OLD_VERSION -> $VERSION${NC}"
                 else
-                    echo "${RED}降级: $OLD_VERSION -> $VERSION${NC}" >&2
-                    # 添加降级强制标志
+                    echo -e  "${RED}降级: $OLD_VERSION -> $VERSION${NC}" >&2
                     export FORCE_DOWNGRADE=1
                 fi
             fi
         fi
         ;;
-    *) echo "${RED}错误：不支持的操作类型 $1${NC}" >&2; exit 1 ;;
+    *) echo -e "${RED}错误：不支持的操作类型 ${1:-}[install|upgrade|reinstall]${NC}" >&2; exit 1 ;;
 esac
 
-# 终止旧进程
 if pgrep -x "$PACKAGE" >/dev/null; then
-    echo "${BLUE}停止进程: $PACKAGE${NC}"
+    echo -e "${BLUE}停止进程: $PACKAGE${NC}"
     pkill -x "$PACKAGE" || true
     sleep 2
 fi
 
-# 添加pre-installation处理
-if [ "${FORCE_DOWNGRADE:-0}" = "1" ]; then
-    echo "${YELLOW}正在执行降级预处理...${NC}"
-    # 移除可能冲突的文件
-    rm -f /var/lib/dpkg/info/${PACKAGE}.preinst 2>/dev/null || true
-fi
+[ "${FORCE_DOWNGRADE:-0}" = "1" ] && {
+    echo -e "${YELLOW}正在执行降级预处理...${NC}"
+    rm -f /var/lib/dpkg/info/${PACKAGE}.* 2>/dev/null || true
+}
 
 exit 0

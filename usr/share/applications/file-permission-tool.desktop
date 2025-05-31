@@ -2,7 +2,7 @@
 Name=file-permission-tool
 Name[zh_CN]=一键清除只读不可更改权限
 Comment=Manage file permissions and attributes
-Exec=/opt/apps/xiaoq_tools/file-permission-tool %F
+Exec=/opt/apps/xiaoq-tools/file-permission-tool %F
 Icon=/usr/share/icons/file-permission-tool.png
 Terminal=true
 Type=Application

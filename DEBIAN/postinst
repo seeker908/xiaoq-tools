@@ -157,18 +157,17 @@ fi
 # 获取本地已安装版本
 LOCAL_VER=$(dpkg-query -W --showformat='${Version}' "$PACKAGE_NAME" 2>/dev/null | head -n 1)
 
-if [ "$REPO_VER" != "$LOCAL_VER" ] || [ -z "$LOCAL_VER" ]; then
 # 使用参数扩展来提取版本号
     REPO_VERSION_ONLY=${REPO_VER#*_}  # 去除文件名中最后一个下划线之后的部分，包含版本号和后缀
     REPO_VERSION_ONLY=${REPO_VERSION_ONLY%_all.deb}  # 去除版本号中的后缀部分（.deb），只保留版本号
+# 严格版本比较
+if [[ "$REPO_VERSION_ONLY" != "$LOCAL_VER" ]] || [[ -z "$LOCAL_VER" ]]; then
     echo  -e "\e[31m 发现新版本: $REPO_VERSION_ONLY (当前: ${LOCAL_VER:-未安装}) \e[0m"
     # 设置3秒超时自动选择Y
     read -t 3 -p $'\e[34m 是否生成升级文件? [Yy/N] (3秒后自动选择生成升级文件) \033[0m' -n 1 -r
     echo
-    
     # 如果超时未输入(返回状态码>128)或输入了Y/y，则执行升级
-    if [[ $? -gt 128 ]] || [[ $REPLY =~ ^[Yy]$ ]]; then
-    
+    if [[ $? -le 128 && "$REPLY" =~ ^[Nn]$ ]]; then
         echo -e "\e[31m 当前旧版本: ${LOCAL_VER}，最新版本可以手工复制网址到浏览器下载 https://gitee.com/seeker_ok/${PACKAGE} \e[0m"
             else
         # 源update文件路径开始

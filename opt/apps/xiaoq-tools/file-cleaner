@@ -91,10 +91,10 @@ remove_immutable_flags() {
         # 处理目录本身 
         if lsattr -d "$target" 2>/dev/null | grep -q "i"; then 
             if ! sudo chattr -i "$target"; then 
-                notify  "权限错误" "无法移除目录的不可变标志"   "error"   "/usr/share/icons/file-cleaner.png"
+                echo "权限错误:无法移除目录的不可变标志"
                 return 1 
             fi 
-            notify "权限更新" "已移除目录不可变标志: $target"  "success"   "/usr/share/icons/file-cleaner.png"
+            echo "权限更新:已移除目录不可变标志: $target"
         fi 
 
         # 递归处理目录内容 
@@ -105,7 +105,7 @@ remove_immutable_flags() {
                     notify "权限错误" "无法移除项目的不可变标志: $item"    "error"   "/usr/share/icons/file-cleaner.png"
                     success=false 
                 else 
-                    notify "权限更新" "已移除不可变标志: $item"  "success"    "/usr/share/icons/file-cleaner.png"
+                    echo "权限更新:已移除不可变标志: $item"
                 fi 
             fi 
         done < <(sudo find "$target" -exec printf '%s\0' {} + 2>/dev/null) 
@@ -203,7 +203,7 @@ fi
 
         # 删除文件或链接 
         if sudo rm -fv "$target_path"; then 
-            notify "删除成功" "已成功删除: $target_path" "success"   "/usr/share/icons/file-cleaner.png"
+            echo "已成功删除: $target_path"
         else 
             notify  "操作异常" "删除过程中出现错误"  "error"   "/usr/share/icons/file-cleaner.png"
             exit 1 
@@ -214,14 +214,14 @@ fi
     # 目录处理逻辑 
     # 权限处理 
     if ! sudo chmod -R u+w "$target_path"; then 
-        notify "权限错误" "无法修改目录权限"  "error"   "/usr/share/icons/file-cleaner.png"
+        echo "权限错误:无法修改目录权限"
         exit 1 
     fi 
-    notify "权限更新" "已设置目录可写权限"  "success"   "/usr/share/icons/file-cleaner.png"
+       echo "权限更新:已设置目录可写权限"
 
     # 单独处理符号链接 
     if sudo find "$target_path" -type l -exec rm -fv {} +; then 
-        notify normal "清理完成" "已删除目录中的所有符号链接"  "success"   "/usr/share/icons/file-cleaner.png"
+        echo "清理完成:已删除目录中的所有符号链接"
     else 
         notify "操作异常" "符号链接删除过程中出现错误" "error"   "/usr/share/icons/file-cleaner.png"
     fi 
@@ -254,7 +254,7 @@ fi
 
         # 执行保留删除 
         if sudo find "$target_path" -type f "${condition[@]}" -exec rm -fv {} +; then 
-            notify "清理完成" "已完成选择性文件删除" "success"  "/usr/share/icons/file-cleaner.png"
+            echo  "清理完成:已完成选择性文件删除"
         else 
             notify "操作异常" "文件删除过程中出现错误" "error"  "/usr/share/icons/file-cleaner.png"
         fi 
@@ -271,7 +271,7 @@ fi
     sudo find "$target_path" -mindepth 1 -type d -empty -delete 2>/dev/null 
     if [ -d "$target_path" ] && [ -z "$(ls -A "$target_path")" ]; then 
         if sudo rmdir "$target_path"; then 
-            notify "清理完成" "已移除空目录: $target_path"  "success"  "/usr/share/icons/file-cleaner.png"
+            echo  "清理完成:已移除空目录: $target_path"
         fi 
     fi 
 

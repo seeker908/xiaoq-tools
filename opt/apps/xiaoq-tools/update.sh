@@ -38,21 +38,19 @@ fi
 # 获取本地已安装版本
 LOCAL_VER=$(dpkg-query -W --showformat='${Version}' "$PACKAGE_NAME" 2>/dev/null | head -n 1)
 # 版本比对
-if [ "$REPO_VER" != "$LOCAL_VER" ] || [ -z "$LOCAL_VER" ]; then
     # 使用参数扩展来提取版本号
     REPO_VERSION_ONLY=${REPO_VER#*_}  # 去除文件名中最后一个下划线之后的部分，包含版本号和后缀
     REPO_VERSION_ONLY=${REPO_VERSION_ONLY%_all.deb}  # 去除版本号中的后缀部分（.deb），只保留版本号
+if [ "$REPO_VERSION_ONLY" != "$LOCAL_VER" ] || [ -z "$LOCAL_VER" ]; then    
     echo  -e "\e[31m 发现新版本: $REPO_VERSION_ONLY (当前: ${LOCAL_VER:-未安装}) \e[0m"    
-    read -p $'\e[34m 是否更新? [Yy/N] \033[0m' -n 1 -r    
-    echo
-    
+         read -p $'\e[34m 是否更新? [Yy/N] \033[0m' -n 1 -r    
+    echo 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         # 停止服务（如果需要）
         # systemctl stop "$PACKAGE_NAME"
-
         # 安装新版本
         sudo -S  echo ""
-        echo -e "\e[31m 正在安装中，请稍等。。。\e[0m"
+           echo -e "\e[31m 正在安装中，请稍等。。。\e[0m"
         sudo dpkg -i "$REPO_VER"
         # 重启服务（如果需要）
         # systemctl restart "$PACKAGE_NAME"
@@ -72,17 +70,14 @@ if [ "$REPO_VER" != "$LOCAL_VER" ] || [ -z "$LOCAL_VER" ]; then
 # 如果都不存在，尝试创建默认的Desktop目录
         echo "Desktop目录不存在"
         fi
-        echo  -e "\e[31m $PACKAGE_NAME 已是最新版本 ($REPO_VERSION_ONLY),正在删除升级文件\e[0m"
-        rm -rf  "$TARGET_DIR/update.sh"
-        echo  -e "\e[31m 删除升级文件完成\e[0m"
+           echo  -e "\e[31m $PACKAGE_NAME 已是最新版本 ($REPO_VERSION_ONLY)\e[0m"
+           rm -rf  "$TARGET_DIR/update.sh"
         # 清理临时目录
         rm -rf $TMP_DIR
-        echo  -e "\e[31m 清理安装文件临时目录完成\e[0m"
-        echo  -e "\e[31m $PACKAGE_NAME 已安装，版本为 $REPO_VERSION_ONLY\e[0m"
+           echo  -e "\e[31m 清理安装文件临时目录完成\e[0m"
     fi
 else
-    echo "$PACKAGE_NAME 已是最新版本 ($LOCAL_VER)"
+     echo "$PACKAGE_NAME 已是最新版本 ($LOCAL_VER)"
 fi
-
 
 exit 0

@@ -81,7 +81,7 @@ case $? in
         echo -e "${RED}本地版本 ${LOCAL_VERSION} 比远程版本 ${REMOTE_VERSION} 新${NC}"
         ;;
     2)
-        echo -e "${GREEN}您好，${PACKAGE_NAME}发现新版本 ${REMOTE_VERSION}，是否更新？[Yy/N]${NC}"
+        echo -e "${GREEN}您好，发现${PACKAGE_NAME}有新版本 ${REMOTE_VERSION}，是否更新？[Yy/N]${NC}"
         read -p " " choice
         if [[ "$choice" =~ ^[Yy]$ ]]; then
             DEB_URL="${GITEE_REPO}/raw/master/${PACKAGE_NAME}_${REMOTE_VERSION}_all.deb"

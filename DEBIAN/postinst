@@ -77,35 +77,6 @@ else
     echo -e "\033[33m警告：无法确定当前用户，跳过修改文件所有者\033[0m" >&2
 fi
 
-
-#  更新 MIME 关联
-update_defaults_list() {
-    local DEFAULTS_LIST="/usr/share/applications/defaults.list"
-    [ ! -f "${DEFAULTS_LIST}" ] && return 0
-
-    local desktop_file="/usr/share/applications/$1"
-    [ ! -f "$desktop_file" ] && return 0
-
-    # 提取 MIME 类型
-    local mime_types=$(grep '^MimeType=' "$desktop_file" | cut -d'=' -f2- | tr ';' ' ')
-
-    for mime_type in $mime_types; do
-        if grep -q "^${mime_type}=" "$DEFAULTS_LIST"; then
-            if ! grep -q "^${mime_type}=.*$1" "$DEFAULTS_LIST"; then
-                local default_apps=$(grep "^${mime_type}=" "$DEFAULTS_LIST" | cut -d'=' -f2-)
-                grep -v "^${mime_type}=" "$DEFAULTS_LIST" > "${DEFAULTS_LIST}.new"
-                echo "${mime_type}=${default_apps};$1" >> "${DEFAULTS_LIST}.new"
-                mv "${DEFAULTS_LIST}.new" "$DEFAULTS_LIST"
-            fi
-        else
-            echo "${mime_type}=$1;" >> "$DEFAULTS_LIST"
-        fi
-    done
-}
-
-update_defaults_list "$app_name1.desktop"
-update_defaults_list "$app_name2.desktop"
-
 # 更新系统数据库
 update-mime-database /usr/share/mime || true
 update-desktop-database /usr/share/applications || true
@@ -117,79 +88,5 @@ if command -v kylin-update-desktop-config >/dev/null 2>&1; then
 elif command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database  # 标准Linux刷新命令
 fi
-
-# 7. 验证是否有新版本
-# 配置参数
-GITEE_REPO="https://gitee.com/seeker_ok/$PACKAGE"
-PACKAGE_NAME="$PACKAGE"
-TMP_DIR="/tmp/$PACKAGE-check"
-
-# 创建临时目录
-TMP_DIR=$(mktemp -d)
-cd $TMP_DIR || exit 0  # 改为exit 0，使错误不终止脚本
-
-# 克隆仓库或拉取更新
-REPO_DIR="$TMP_DIR/repo"
-if [ -d "$REPO_DIR" ]; then
-    cd "$REPO_DIR"
-    git pull origin master >/dev/null 2>&1 || true
-else
-    git clone "$GITEE_REPO" "$REPO_DIR" --depth 1 >/dev/null 2>&1 || {
-        echo -e "\033[33m提示：无法访问更新仓库，将使用当前版本\033[0m" >&2
-        exit 0
-    }
-    cd "$REPO_DIR" || exit 0
-fi
-
-# 查找最新的 deb 文件
-REPO_VER=$(ls *.deb 2>/dev/null | sort -V | tail -n 1)
-if [ -z "$REPO_VER" ]; then
-    echo -e "\033[33m提示：仓库中未找到任何 deb 文件，将使用当前版本\033[0m" >&2
-    exit 0
-fi
-
-# 验证Deb文件存在
-if [ ! -f "$REPO_VER" ]; then
-    echo -e "\033[33m提示：无法访问找到的Deb文件，将使用当前版本\033[0m" >&2
-    exit 0
-fi
-
-# 获取本地已安装版本
-LOCAL_VER=$(dpkg-query -W --showformat='${Version}' "$PACKAGE_NAME" 2>/dev/null | head -n 1)
-
-# 使用参数扩展来提取版本号
-    REPO_VERSION_ONLY=${REPO_VER#*_}  # 去除文件名中最后一个下划线之后的部分，包含版本号和后缀
-    REPO_VERSION_ONLY=${REPO_VERSION_ONLY%_all.deb}  # 去除版本号中的后缀部分（.deb），只保留版本号
-# 严格版本比较
-if [[ "$REPO_VERSION_ONLY" != "$LOCAL_VER" ]] || [[ -z "$LOCAL_VER" ]]; then
-    echo  -e "\e[31m 发现新版本: $REPO_VERSION_ONLY (当前: ${LOCAL_VER:-未安装}) \e[0m"
-    # 设置3秒超时自动选择Y
-    read -t 3 -p $'\e[34m 是否生成升级文件? [Yy/N] (3秒后自动选择生成升级文件) \033[0m' -n 1 -r
-    echo
-    # 如果超时未输入(返回状态码>128)或输入了Y/y，则执行升级
-    if [[ $? -le 128 && "$REPLY" =~ ^[Nn]$ ]]; then
-        echo -e "\e[31m 当前旧版本: ${LOCAL_VER}，最新版本可以手工复制网址到浏览器下载 https://gitee.com/seeker_ok/${PACKAGE} \e[0m"
-            else
-        # 源update文件路径开始
-        UPDATE_SRC=/opt/apps/$PACKAGE/update.sh
-        # 复制.update文件到目标桌面目录
-        ln -svf "$UPDATE_SRC" "$TARGET_DIR/"
-        # 修改权限为-rwx------ (700)
-        chmod 700 "$TARGET_DIR/update.sh"
-        # 修改文件所有者为当前用户
-        if [ -n "$LOGUSER" ]; then
-            chown "$LOGUSER:$LOGUSER" "$TARGET_DIR/update.sh"
-        else
-            echo -e "\033[33m警告：无法确定当前用户，跳过修改文件所有者\033[0m" >&2
-        fi
-        echo  -e  '\e[31m 已在桌面生成升级文件，双击桌面update.sh文件【在终端中运行】进行升级\e[0m'
-        # 源update文件路径结束
-    fi
-else
-    echo -e "\e[31m 当前已是最新版本: ${LOCAL_VER}\e[0m"
-fi
-# 清理临时目录
-rm -rf $TMP_DIR
-# 验证是否有新版本结束
 
 echo -e "\033[34m软件已安装成功，感谢您使用...\033[0m"

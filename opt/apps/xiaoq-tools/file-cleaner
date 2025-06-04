@@ -40,6 +40,63 @@ notify() {
     fi
 } 
 
+#=====【检测软件是否有新的版本】==========
+PACKAGE_NAME="xiaoq-tools"
+GITEE_REPO="https://gitee.com/seeker_ok/${PACKAGE_NAME}"
+LOCAL_VERSION=$(dpkg-query -W --showformat='${Version}' ${PACKAGE_NAME} 2>/dev/null)
+# 获取远程版本号
+REMOTE_CONTROL=$(curl -sL "${GITEE_REPO}/raw/master/DEBIAN/control")
+REMOTE_VERSION=$(echo "$REMOTE_CONTROL" | grep 'Version:' | awk '{print $2}')
+# 版本比较函数
+version_compare() {
+    if [ "$1" = "$2" ]; then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ -z ${ver2[i]} ]]; then
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]})); then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]})); then
+            return 2
+        fi
+    done
+    return 0
+}
+# 主逻辑
+version_compare "$LOCAL_VERSION" "$REMOTE_VERSION"
+case $? in
+    0)
+        echo -e "\n"
+        ;;
+    1)
+        echo -e "${RED}本地版本 ${LOCAL_VERSION} 比远程版本 ${REMOTE_VERSION} 新${NC}"
+        ;;
+    2)
+        echo -e "${GREEN}您好，${PACKAGE_NAME}发现新版本 ${REMOTE_VERSION}，是否更新？[Yy/N]${NC}"
+        read -p " " choice
+        if [[ "$choice" =~ ^[Yy]$ ]]; then
+            DEB_URL="${GITEE_REPO}/raw/master/${PACKAGE_NAME}_${REMOTE_VERSION}_all.deb"
+            x-terminal-emulator -e "bash -c \"
+                echo -e '${GREEN}正在下载并安装新版本,请稍等...${NC}';
+                wget -q ${DEB_URL} -O /tmp/${PACKAGE_NAME}.deb && 
+                sudo apt install -y /tmp/${PACKAGE_NAME}.deb && 
+                rm -rf /tmp/${PACKAGE_NAME}.deb;
+                echo -e '${GREEN}软件已更新至 ${REMOTE_VERSION}，请关闭窗口重新运行${NC}';
+                read -p  $'${BLUE} 按任意键关闭此窗口...${NC}' \""
+            exit 1
+        fi
+        ;;
+esac
+#=====【检测软件是否有新的版本结束】==========
+
 # 免责申明
 notify "软件使用免责申明" "免责申明:本软件具备【强制删除】文件及文件夹功能，可能造成不可逆数据损失。请在使用前仔细阅读以下条款，确认理解所有操作风险后方可继续使用。您的使用行为将视为对本协议全部条款的认可与接受。\n1.1 、使用本软件前，用户应自行对重要文件进行备份;\n1.2、本软件为免费开源程序，不提供任何形式的技术支持;\n1.3、因用户操作失误、未阅读提示、擅自修改程序等行为导致的数据损失，开发者不承担任何法律责任;\n1.4、使用本软件进行非法操作产生的后果由用户自行承担" "error"  "/usr/share/icons/file-cleaner.png"
 
@@ -281,6 +338,6 @@ fi
 # 执行主函数 
 main "$@" 
 
-echo  "感谢您使用本软件，软件免费使用与更新，具体软件更新请访问以下网址：https://gitee.com/seeker_ok/file-cleaner"
+echo  "感谢您使用本软件，软件免费使用与更新，具体软件更新请访问以下网址：https://gitee.com/seeker_ok/xiaoq-tools"
 read -p "按回车键退出..." 
 exit 0 

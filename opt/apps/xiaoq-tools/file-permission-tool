@@ -75,7 +75,7 @@ version_compare() {
 version_compare "$LOCAL_VERSION" "$REMOTE_VERSION"
 case $? in
     0)
-        echo -e "\n"
+        :  # 空操作替代原空行
         ;;
     1)
         echo -e "${RED}本地版本 ${LOCAL_VERSION} 比远程版本 ${REMOTE_VERSION} 新${NC}"

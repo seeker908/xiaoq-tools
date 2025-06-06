@@ -3,6 +3,7 @@
 # 颜色定义 
 RED='\033[0;31m' 
 GREEN='\033[0;32m' 
+YELLOW='\033[33m'
 BLUE='\033[0;34m' 
 NC='\033[0m' # No Color 
  
@@ -12,7 +13,7 @@ notify() {
     local message="$2" 
     local level="$3" 
     local icon="${4:-}"  # 可选参数：图标路径
-    
+     
     case "$level" in 
         "success") 
             color="$GREEN" 
@@ -22,6 +23,10 @@ notify() {
             color="$BLUE" 
             urgency="normal" 
             ;; 
+         "wrong") 
+            color="$YELLOW" 
+            urgency="normal" 
+            ;;              
         "error") 
             color="$RED" 
             urgency="critical" 
@@ -33,7 +38,7 @@ notify() {
     esac 
  
     echo -e "${color}${message}${NC}" 
-        # 带图标和不带图标的两种调用方式
+    # 带图标和不带图标的两种调用方式
     if [[ -n "$icon" ]]; then
         notify-send -u "$urgency" -i "$icon" "$title" "$message" 2>/dev/null || true
     else
@@ -157,7 +162,7 @@ critical_paths=("/bin" "/sbin" "/usr/bin" "/usr/sbin" "/lib" "/usr/lib" "/lib64"
 for critical_path in "${critical_paths[@]}"; do 
     if [ "$target_path" = "$critical_path" ] || [[ "$target_path" == "$critical_path/"* ]]; then 
         notify "警告" "警告: 您正在尝试删除系统关键文件或目录的权限！$critical_path" "warning"   "/usr/share/icons/file-permission-tool.png"
-        read -p "确定要继续吗？(y/n): " confirm 
+        read -p "确定要继续吗？(Yy/n): " confirm 
         if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then 
             exit 1 
         fi 

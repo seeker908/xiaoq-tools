@@ -5,6 +5,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[33m'
 BLUE='\033[0;34m' 
 NC='\033[0m' # No Color 
+ 
 # 桌面通知函数 
 notify() { 
     local title="$1" 
@@ -53,52 +54,47 @@ REMOTE_CONTROL=$(curl -sL "${GITEE_REPO}/raw/master/DEBIAN/control")
 REMOTE_VERSION=$(echo "$REMOTE_CONTROL" | grep 'Version:' | awk '{print $2}')
 # 版本比较函数
 version_compare() {
-    if [ "$1" = "$2" ]; then
-        return 0
-    fi
-    local IFS=.
-    local i ver1=($1) ver2=($2)
-    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
-        ver1[i]=0
-    done
-    for ((i=0; i<${#ver1[@]}; i++)); do
-        if [[ -z ${ver2[i]} ]]; then
-            ver2[i]=0
-        fi
-        if ((10#${ver1[i]} > 10#${ver2[i]})); then
-            return 1
-        fi
-        if ((10#${ver1[i]} < 10#${ver2[i]})); then
-            return 2
-        fi
-    done
+  if [ "$1" = "$2" ]; then
     return 0
+  fi
+  local IFS=.
+  local i ver1=($1) ver2=($2)
+  for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+    ver1[i]=0
+  done
+  for ((i=0; i<${#ver1[@]}; i++)); do
+    if [[ -z ${ver2[i]} ]]; then
+      ver2[i]=0
+    fi
+    if ((10#${ver1[i]} > 10#${ver2[i]})); then
+      return 1
+    fi
+    if ((10#${ver1[i]} < 10#${ver2[i]})); then
+      return 2
+    fi
+  done
+  return 0
 }
-# 主逻辑
-version_compare "$LOCAL_VERSION" "$REMOTE_VERSION"
-case $? in
-    0)
-        :  # 空操作替代原空行
-        ;;
-    1)
-        echo -e "${RED}本地版本 ${LOCAL_VERSION} 比远程版本 ${REMOTE_VERSION} 新${NC}"
-        ;;
-    2)
-        echo -e "${GREEN}您好，发现${PACKAGE_NAME}有新版本 ${REMOTE_VERSION}，是否更新？[Yy/N]${NC}"
-        read -p " " choice
-        if [[ "$choice" =~ ^[Yy]$ ]]; then
-            DEB_URL="${GITEE_REPO}/raw/master/${PACKAGE_NAME}_${REMOTE_VERSION}_all.deb"
-            x-terminal-emulator -e "bash -c \"
-                echo -e '${GREEN}正在下载并安装新版本,请稍等...${NC}';
-                wget -q ${DEB_URL} -O /tmp/${PACKAGE_NAME}.deb && 
-                sudo apt install -y /tmp/${PACKAGE_NAME}.deb && 
-                rm -rf /tmp/${PACKAGE_NAME}.deb;
-                echo -e '${GREEN}软件已更新至 ${REMOTE_VERSION}，请关闭窗口重新运行${NC}';
-                read -p  $'${BLUE} 按任意键关闭此窗口...${NC}' \""
-            exit 1
-        fi
-        ;;
-esac
+
+if version_compare "$LOCAL_VERSION" "$REMOTE_VERSION"; then
+  : # 本地版本与远程版本相同，不执行任何操作
+elif [ $? -eq 1 ]; then
+  echo -e "${wrong}本地版本 ${LOCAL_VERSION} 比远程版本 ${REMOTE_VERSION} 新${NC}"
+else
+  echo -e "${GREEN}发现${PACKAGE_NAME}有新版本 ${REMOTE_VERSION}，是否更新？[Yy/N]${NC}"
+  read -p " " choice
+  if [[ "$choice" = "y" || "$choice" = "Y" ]]; then
+    DEB_URL="${GITEE_REPO}/raw/master/${PACKAGE_NAME}_${REMOTE_VERSION}_all.deb"
+    x-terminal-emulator -e "bash -c \"
+      echo -e '${GREEN}正在下载并安装新版本,请稍等...${NC}';
+      wget -q ${DEB_URL} -O /tmp/${PACKAGE_NAME}.deb && 
+      sudo apt install -y /tmp/${PACKAGE_NAME}.deb && 
+      rm -rf /tmp/${PACKAGE_NAME}.deb;
+      echo -e '${GREEN}软件已更新至 ${REMOTE_VERSION}，请关闭窗口重新运行${NC}';
+      read -p $'${BLUE} 按任意键关闭此窗口...${NC}' \""
+    exit 1
+  fi
+fi
 #=====【检测软件是否有新的版本结束】==========
 
 # 免责申明
@@ -206,7 +202,7 @@ process_path() {
     # 处理file://协议路径 
     if [[ "$target_path" == file://* ]]; then 
         target_path="${target_path#file://}" 
-        target_path=$(echo "$target_path" | sed 's/%20/ /g')  
+        target_path=$(echo "$target_path" | sed 's/%20/ /g') # 解码URL编码 
     fi 
     # 处理麒麟系统可能的多重引号问题 
     target_path=$(echo "$target_path" | sed "s/^'\+//;s/'\+$//;s/^\"\+//;s/\"\+$//") 

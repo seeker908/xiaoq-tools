@@ -1,12 +1,10 @@
 #!/bin/bash 
- 
 # 颜色定义 
 RED='\033[0;31m' 
 GREEN='\033[0;32m' 
 YELLOW='\033[33m'
 BLUE='\033[0;34m' 
 NC='\033[0m' # No Color 
- 
 # 桌面通知函数 
 notify() { 
     local title="$1" 
@@ -45,7 +43,6 @@ notify() {
         notify-send -u "$urgency" "$title" "$message" 2>/dev/null || true
     fi
 } 
-
 #=====【检测软件是否有新的版本】==========
 PACKAGE_NAME="xiaoq-tools"
 GITEE_REPO="https://gitee.com/seeker_ok/${PACKAGE_NAME}"
@@ -97,15 +94,12 @@ else
   fi
 fi
 #=====【检测软件是否有新的版本结束】==========
-
 # 免责申明
 notify "软件使用免责申明" "免责申明:本软件具清除【只读】 与 【防止编辑】文件及文件夹权限功能，可能造成不可逆数据损失。请在使用前仔细阅读以下条款，确认理解所有操作风险后方可继续使用。您的使用行为将视为对本协议全部条款的认可与接受。\n1.1 、使用本软件前，用户应自行对重要文件进行备份;\n1.2、本软件为免费开源程序，不提供任何形式的技术支持;\n1.3、因用户操作失误、未阅读提示、擅自修改程序等行为导致的数据损失，开发者不承担任何法律责任;\n1.4、使用本软件进行非法操作产生的后果由用户自行承担" "error"  "/usr/share/icons/file-permission-tool.png"
 
 echo -ne "\e]2;一键清除只读不可更改权限\a"
-
 # 保存原始参数 
 ORIGINAL_ARGS=("$@") 
- 
 # 提前获取sudo权限 
 if [ $(id -u) -ne 0 ]; then 
     sudo -v || { notify "错误" "需要sudo权限" "error"; exit 1; } 
@@ -151,7 +145,6 @@ if [ ! -e "$target_path" ]; then
         exit 1 
     fi 
 fi 
- 
 # 检查是否是系统关键文件/目录 
 critical_paths=("/bin" "/sbin" "/usr/bin" "/usr/sbin" "/lib" "/usr/lib" "/lib64" "/usr/lib64"  "/etc" "/var" "/boot" "/root" "/dev" "/proc" "/sys" "/run"   "/usr/local/bin" "/usr/local/sbin"  "/home"   "/proc"   "/srv" ) 
 for critical_path in "${critical_paths[@]}"; do 
@@ -164,7 +157,6 @@ for critical_path in "${critical_paths[@]}"; do
         break 
     fi 
 done 
- 
 # 判断是文件还是目录 
 if [ -f "$target_path" ]; then 
     item_type="文件" 
@@ -176,7 +168,6 @@ else
 fi 
  
 notify "信息" "正在处理$item_type: $target_path" "success"   "/usr/share/icons/file-permission-tool.png"
- 
 # 递归移除属性 
 remove_attributes() { 
     local path="$1" 
@@ -195,7 +186,7 @@ remove_attributes() {
     sudo chattr -i -d "$path" 2>/dev/null 
     sudo chmod u+w "$path" 2>/dev/null 
 } 
- 
+
 remove_attributes "$target_path" 
  
 if [ $? -eq 0 ]; then 

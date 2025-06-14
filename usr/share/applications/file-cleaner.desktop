@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=File Cleaner
 Name[zh_CN]=强制删除文件或文件夹
+Name[zh_TW]=強制刪除檔案或資料夾
 Comment=Clean files and directories
 Exec=/opt/apps/xiaoq-tools/file-cleaner %F
 Icon=/usr/share/icons/file-cleaner.png
@@ -10,5 +11,8 @@ Categories=Utility;System;
 Keywords=clean;delete;remove;
 MimeType=inode/directory;inode/file;application/octet-stream;text/plain;
 Actions=ContextMenu;
+
 [Desktop Action ContextMenu]
-Name=右键菜单支持
+Name=Context Menu Support
+Name[zh_CN]=右键菜单支持
+Name[zh_TW]=右鍵選單支援

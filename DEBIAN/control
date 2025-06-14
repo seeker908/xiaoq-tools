@@ -3,6 +3,7 @@ Version: 2.03
 Section: utils
 Priority: optional
 Architecture: all
+Installed-Size: 1460
 Maintainer: fb93<fb93@fb93.com>
 Depends: bash, libnotify-bin
 Description: 强大的文件目录清理工具

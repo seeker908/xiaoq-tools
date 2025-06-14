@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=file-permission-tool
 Name[zh_CN]=一键清除只读不可更改权限
+Name[zh_TW]=一鍵清除只讀不可更改許可權
 Comment=Manage file permissions and attributes
 Exec=/opt/apps/xiaoq-tools/file-permission-tool %F
 Icon=/usr/share/icons/file-permission-tool.png
@@ -13,3 +14,4 @@ MimeType=inode/directory;inode/file;application/octet-stream;text/plain;
 Actions=ContextMenu;
 [Desktop Action ContextMenu]
 Name=右键菜单支持
+Name[zh_TW]=一鍵清除只讀不可更改許可權

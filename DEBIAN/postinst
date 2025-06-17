@@ -17,8 +17,11 @@ chmod 644 /usr/share/icons/$app_name2.png
 chmod 644 /usr/share/applications/$app_name1.desktop
 chmod 644 /usr/share/applications/$app_name2.desktop
 
-cp -f /usr/share/icons/$app_name1.png  /usr/share/icons/hicolor/48x48/apps/$app_name1.png
-cp -f /usr/share/icons/$app_name2.png  /usr/share/icons/hicolor/48x48/apps/$app_name2.png
+ln -svf /usr/share/icons/$app_name1.png  /usr/share/icons/hicolor/48x48/apps/$app_name1.png
+ln -svf /usr/share/icons/$app_name2.png  /usr/share/icons/hicolor/48x48/apps/$app_name2.png
+
+chmod 644 /usr/share/icons/hicolor/48x48/apps/$app_name1.png
+chmod 644 /usr/share/icons/hicolor/48x48/apps/$app_name2.png
 
 # 检查依赖
 if ! command -v notify-send >/dev/null; then
